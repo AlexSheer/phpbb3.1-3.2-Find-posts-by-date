@@ -1,0 +1,13 @@
+services:
+    sheer.find_by_date.listener:
+        class: sheer\find_by_date\event\listener
+        arguments:
+            - @dbal.conn
+            - @template
+            - @user
+            - @request
+            - %core.root_path%
+            - %core.php_ext%
+            - @config
+        tags:
+            - { name: event.listener }
