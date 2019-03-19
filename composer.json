@@ -2,14 +2,14 @@
     "name": "sheer/find_by_date",
     "type": "phpbb-extension",
     "description": "Find posts & topics by date",
-    "homepage": "http://www.phpbbguru.net/",
+    "homepage": "https://www.phpbbguru.net/community/viewtopic.php?f=64&t=46379&p=494423#p494423",
     "version": "1.0.0",
     "time": "2015-08-26",
     "license": "GPL-2.0",
     "authors": [
         {
             "name": "Sheer",
-            "homepage": "http://www.phpbbguru.net/",
+            "homepage": "https://www.phpbbguru.net/",
             "role": "Developer"
         }
     ],
