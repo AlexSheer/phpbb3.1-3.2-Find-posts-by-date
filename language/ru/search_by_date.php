@@ -21,6 +21,6 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-	'SERCH_DATE'			=> 'Дата',
+	'SERCH_DATE'			=> 'по дате',
 	'SERCH_DATE_EXPLAIN'	=> 'Укажите здесь дату, чтобы найти сообщения за определенный день.',
 ));
