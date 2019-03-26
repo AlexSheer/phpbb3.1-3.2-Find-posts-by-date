@@ -1,0 +1,19 @@
+<!-- INCLUDEJS @sheer_find_by_date/jquery-ui.js -->
+<script src="{ROOT_PATH}ext/sheer/find_by_date/language/{S_USER_LANG}/datepicker-{S_USER_LANG}.js?assets_version={T_ASSETS_VERSION}"></script>
+
+<script>
+	$(function() {
+		$( "#datepicker" ).datepicker( {
+			maxDate: "+0D",
+			onSelect: function(dateText) {
+				location.href = 'search.php?d='+dateText+'&keywords=&submit=true';
+			}
+		});
+	});
+
+	$( function() {
+		$( "#datepicker_2" ).datepicker( {
+			maxDate: "+0D"
+		});
+	});
+</script>
