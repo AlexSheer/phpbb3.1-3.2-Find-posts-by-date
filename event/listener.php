@@ -28,10 +28,11 @@ class listener implements EventSubscriberInterface
 			'core.user_setup'						=> 'load_language_on_setup',
 			'core.search_modify_url_parameters'		=> 'modify_url_parameters',
 			'core.search_backend_search_after'		=> 'search_backend_search_after',
+			'core.search_get_posts_data'			=> 'get_posts_data',
 		);
 	}
 
-	/** @var \phpbb	emplate	emplate */
+	/** @var \phpbb\template\template */
 	protected $template;
 
 	//** @var string phpbb_root_path */
@@ -81,9 +82,21 @@ class listener implements EventSubscriberInterface
 		$event['lang_set_ext'] = $lang_set_ext;
 	}
 
+	public function get_posts_data($event)
+	{
+		if ($date = $this->request->variable('d', ''))
+		{
+			$sql_array = $event['sql_array'];
+			$start = $this->request->variable('start', 0);
+
+			$sql_array['ORDER_BY'] = $sql_array['ORDER_BY'] . ' LIMIT ' . $start . ', ' . $this->config['posts_per_page'];
+			$event['sql_array'] = $sql_array;
+		}
+	}
+
 	public function search_backend_search_after($event)
 	{
-		if($date = $this->request->variable('d', ''))
+		if ($date = $this->request->variable('d', ''))
 		{
 			$ex_fid_ary = $event['ex_fid_ary'];
 			$total_match_count = $event['total_match_count'];
@@ -95,7 +108,7 @@ class listener implements EventSubscriberInterface
 
 	public function modify_url_parameters($event)
 	{
-		if($date = $this->request->variable('d', ''))
+		if ($date = $this->request->variable('d', ''))
 		{
 			$add_keywords		= $this->request->variable('add_keywords', '', true);
 			$author				= $this->request->variable('author', '', true);
@@ -104,10 +117,10 @@ class listener implements EventSubscriberInterface
 			$sql_where = $event['sql_where'];
 
 			$time = explode('.', $date);
-			$time = mktime(0, 0, 0, (int)$time[1], (int)$time[0], $time[2]);
+			$time = mktime(0, 0, 0, (int)$time[1], (int)$time[0], $time[2]) + $this->get_time_offset();
 			$next = $time + 3600 * 24;
 
-			if(!$sql_where && ($add_keywords || $add_keywords || $keywords))
+			if (!$sql_where && ($add_keywords || $add_keywords || $keywords))
 			{
 				 return;
 			}
@@ -122,70 +135,48 @@ class listener implements EventSubscriberInterface
 			$diff = array('total_match_count' => $total);
 			$ex_fid_ary = array_diff($total = $event['total_match_count'], $diff);
 
-			if ($event['show_results'] == 'posts')
+			if ($sql_where)
 			{
-				if ($sql_where)
-				{
-					$sql_where .= ' AND';
-					$sql_where = str_replace('f.forum_id', 'p.forum_id', $sql_where);
-				}
-				$sql_where .= ' p.post_time > ' . $time . ' AND p.post_time < ' . $next . ' AND p.post_visibility = 1';
-				if (sizeof($ex_fid_ary))
-				{
-					$sql_where .= ' AND ' . $this->db->sql_in_set('p.forum_id', $ex_fid_ary, true) . '';
-				}
-
-				$sql = 'SELECT COUNT(p.post_id) AS total
-					FROM ' . POSTS_TABLE . ' p
-						WHERE ' . $sql_where . '';
-				$result = $this->db->sql_query($sql);
-				$total = (int) $this->db->sql_fetchfield('total');
-				$this->db->sql_freeresult($result);
-
-				$total = $total;
-				$event['sql_where'] = $sql_where;
+				$sql_where .= ' AND';
+				$sql_where = str_replace('f.forum_id', 'p.forum_id', $sql_where);
 			}
-			else
+			$sql_where .= ' p.post_time > ' . $time . ' AND p.post_time < ' . $next . ' AND p.post_visibility = 1';
+			if (sizeof($ex_fid_ary))
 			{
-				$ids = array();
-				if($sql_where)
-				{
-					$sql_where = '' . str_replace('topic_visibility', 'post_visibility', $sql_where . ' AND ');
-					$sql_where = str_replace('f.forum_id', 't.forum_id', $sql_where);
-				}
-				else
-				{
-					$sql_where = ' post_visibility = 1 AND ';
-				}
-
-				$sql_where_ex_fid = (sizeof($ex_fid_ary)) ? ' AND ' . $this->db->sql_in_set('t.forum_id', $ex_fid_ary, true) . '' : '';
-
-				$sql = 'SELECT DISTINCT t.topic_id
-					FROM ' . POSTS_TABLE . ' t
-					WHERE ' . $sql_where . '
-					t.post_time > ' . $time . ' AND t.post_time < ' . $next . ' ' . $sql_where_ex_fid . '';
-				$result = $this->db->sql_query($sql);
-
-				while ($row = $this->db->sql_fetchrow($result))
-				{
-					$ids[] = $row['topic_id'];
-				}
-				$this->db->sql_freeresult($result);
-
-				if (sizeof($ids))
-				{
-					$total = sizeof($ids);
-					$event['sql_where'] = $this->db->sql_in_set('t.topic_id', $ids);
-				}
-				else
-				{
-					$total = 0;
-					$event['sql_where'] = $this->db->sql_in_set('t.topic_id', 0);
-				}
+				$sql_where .= ' AND ' . $this->db->sql_in_set('p.forum_id', $ex_fid_ary, true) . '';
 			}
+
+			$sql = 'SELECT COUNT(p.post_id) AS total
+				FROM ' . POSTS_TABLE . ' p
+					WHERE ' . $sql_where . '';
+			$result = $this->db->sql_query($sql);
+			$total = (int) $this->db->sql_fetchfield('total');
+			$this->db->sql_freeresult($result);
+
+			$total = $total;
+			$event['sql_where'] = $sql_where;
 
 			$event['total_match_count'] = $total;
 			$event['u_search'] = append_sid("{$this->phpbb_root_path}search.$this->php_ext", 'd=' . $date . '&add_keywords=' . urlencode(htmlspecialchars_decode($add_keywords)) . '&submit=true');
 		}
+	}
+
+	public function get_time_offset()
+	{
+		static $utc;
+		$time_zone = ($this->user->data['user_id'] != ANONYMOUS) ? $this->user->data['user_timezone'] : $this->config['board_timezone'];
+		if (empty($time_zone))
+		{
+			$time_zone = 'UTC';
+		}
+		if (!isset($utc))
+		{
+			$utc = new \DateTimeZone($time_zone);
+		}
+		$dt = $this->user->create_datetime('now', $utc);
+		$is_dst = date('I');
+		$offset = $dt->getOffset();
+		$offset = ($is_dst) ? $offset : $offset - 3600;
+		return($offset);
 	}
 }
