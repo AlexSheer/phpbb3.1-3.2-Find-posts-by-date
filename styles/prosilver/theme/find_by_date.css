@@ -1,0 +1,14 @@
+.find
+{
+	float:left;
+	padding-top:30px;
+}
+#datepicker
+{
+	width: 60%;
+	margin-right: -28px;
+	padding: 4px;
+	border-radius: 5px;
+	box-shadow: 0px 0px 10px rgb(0, 117, 176);
+	border-color: rgb(199, 195, 191);
+}
