@@ -3,8 +3,8 @@
     "type": "phpbb-extension",
     "description": "Find posts & topics by date",
     "homepage": "https://www.phpbbguru.net/community/viewtopic.php?f=64&t=46379&p=494423#p494423",
-    "version": "1.0.0",
-    "time": "2015-08-26",
+    "version": "1.0.1",
+    "time": "2019-03-19",
     "license": "GPL-2.0",
     "authors": [
         {
