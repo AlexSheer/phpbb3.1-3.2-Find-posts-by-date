@@ -32,6 +32,9 @@ class listener implements EventSubscriberInterface
 		);
 	}
 
+	/** @var \phpbb\db\driver\driver_interface $db */
+	protected $db;
+
 	/** @var \phpbb\template\template */
 	protected $template;
 
@@ -50,6 +53,11 @@ class listener implements EventSubscriberInterface
 	/** @var \phpbb\config\config */
 	protected $config;
 
+	/** @var \phpbb\auth\auth */
+	protected $auth;
+
+	protected $date;
+
 	/**
 	* Constructor
 	*/
@@ -60,7 +68,8 @@ class listener implements EventSubscriberInterface
 		\phpbb\request\request_interface $request,
 		$phpbb_root_path,
 		$php_ext,
-		\phpbb\config\config $config
+		\phpbb\config\config $config,
+		\phpbb\auth\auth $auth
 	)
 	{
 		$this->db = $db;
@@ -70,6 +79,9 @@ class listener implements EventSubscriberInterface
 		$this->phpbb_root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
 		$this->config = $config;
+		$this->auth = $auth;
+
+		$this->date = $this->request->variable('d', '');
 	}
 
 	public function load_language_on_setup($event)
@@ -84,7 +96,7 @@ class listener implements EventSubscriberInterface
 
 	public function get_posts_data($event)
 	{
-		if ($date = $this->request->variable('d', ''))
+		if ($this->date && $this->auth->acl_get('u_search'))
 		{
 			$sql_array = $event['sql_array'];
 			$start = $this->request->variable('start', 0);
@@ -96,7 +108,7 @@ class listener implements EventSubscriberInterface
 
 	public function search_backend_search_after($event)
 	{
-		if ($date = $this->request->variable('d', ''))
+		if ($this->date && $this->auth->acl_get('u_search'))
 		{
 			$ex_fid_ary = $event['ex_fid_ary'];
 			$total_match_count = $event['total_match_count'];
@@ -108,7 +120,7 @@ class listener implements EventSubscriberInterface
 
 	public function modify_url_parameters($event)
 	{
-		if ($date = $this->request->variable('d', ''))
+		if ($this->date && $this->auth->acl_get('u_search'))
 		{
 			$add_keywords		= $this->request->variable('add_keywords', '', true);
 			$author				= $this->request->variable('author', '', true);
@@ -116,7 +128,7 @@ class listener implements EventSubscriberInterface
 
 			$sql_where = $event['sql_where'];
 
-			$time = explode('.', $date);
+			$time = explode('.', $this->date);
 			$time = mktime(0, 0, 0, (int)$time[1], (int)$time[0], $time[2]) + $this->get_time_offset();
 			$next = $time + 3600 * 24;
 
