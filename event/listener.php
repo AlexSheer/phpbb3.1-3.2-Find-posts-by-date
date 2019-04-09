@@ -169,7 +169,7 @@ class listener implements EventSubscriberInterface
 			$event['sql_where'] = $sql_where;
 
 			$event['total_match_count'] = $total;
-			$event['u_search'] = append_sid("{$this->phpbb_root_path}search.$this->php_ext", 'd=' . $date . '&add_keywords=' . urlencode(htmlspecialchars_decode($add_keywords)) . '&submit=true');
+			$event['u_search'] = append_sid("{$this->phpbb_root_path}search.$this->php_ext", 'd=' . $this->date . '&add_keywords=' . urlencode(htmlspecialchars_decode($add_keywords)) . '&submit=true');
 		}
 	}
 
